@@ -365,6 +365,62 @@ class IDataTable:
             # print(e)
             raise e
 
+    def _get_data_containing_string_from_table(self, get_dict: dict, requested_data="all"):
+        """
+        Author: Zarin
+
+        Protected Method
+        Get all data that has contains string that was inputted by the user
+        Used for search bars, etc.
+
+        Args:
+            get_dict:
+             key tells the column label to search the value to get,
+             value tells the value that the row contains that needs to be searched
+
+            requested_data:
+            　data requested to return when the row with the above condition is found
+              if set 'all', all of the row's data is returned
+
+        Returns:
+            May return more than one row if the conditions meet
+
+        """
+        try:
+            if len(get_dict) > 1:
+                raise ValueError("Input has more than one element. For deleting, only one element is accepted")
+
+            # Parse the input dict, prepare it to suitable format
+            get_key: list = [x for x in get_dict.keys()]
+            # input_values_placeholder: str = "(" + (",".join(["?" for x in primary_key.values()])) + ")"
+            get_val = [x for x in get_dict.values()]
+
+
+            # Get value of requested data input param
+            col_string = ""
+            if requested_data == "all":
+                col_string = " * "
+            else:
+                for each_col_name, index in zip(requested_data, range(len(requested_data))):
+                    col_string += str(each_col_name)
+                    if index != range(len(requested_data))[-1]:
+                        col_string += ", "
+
+            commit_script = "SELECT " + col_string + \
+                            " FROM " + self.table_name + \
+                            " WHERE " + str(get_key[0]) + \
+                            " LIKE " + "'%" + str(get_val[0]) + "%'"
+
+            c = self.connection_obj.cursor()
+            # result = c.execute(commit_script, get_dict)
+            result = c.execute(commit_script)
+            # deleting doesn't have any return value
+            self.connection_obj.commit()
+            return result.fetchall()
+        except (Error, ValueError) as e:
+            # print(e)
+            raise e
+
     def _get_specific_col_from_table(self, col_name: list):
         """
         Author: Zarin
@@ -498,6 +554,22 @@ class IDataTable:
         """
 
         op_flag = self._get_specific_col_from_table(col_name)
+
+        return op_flag
+
+    def get_data_containing_string(self, col_name, search_value, requested_data):
+        """
+        Method to get data col containing inputted string.
+        Args:
+            col_name: List of col names needed
+
+        Returns:
+
+        """
+
+        search_dict: dict = {col_name: search_value}
+
+        op_flag = self._get_data_containing_string_from_table(get_dict=search_dict, requested_data=requested_data)
 
         return op_flag
 
